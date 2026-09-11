@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InvoiceForge - 本地发票与商业单据管理工具</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-100">
+  <div id="app" class="flex h-screen overflow-hidden">
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="bg-gray-800 text-white w-64 flex-shrink-0 hidden md:block transition-all duration-300">
+      <div class="p-4 border-b border-gray-700">
+        <h1 class="text-2xl font-bold flex items-center">
+          <i class="fa fa-file-text-o mr-2"></i>InvoiceForge
+        </h1>
+        <p class="text-xs text-gray-400 mt-1">Local Invoice Management</p>
+      </div>
+      <nav class="mt-4">
+        <a href="#dashboard" class="nav-link block px-4 py-3 hover:bg-gray-700 flex items-center active" data-section="dashboard">
+          <i class="fa fa-dashboard w-6"></i><span data-i18n="dashboard">仪表盘</span>
+        </a>
+        <a href="#invoices" class="nav-link block px-4 py-3 hover:bg-gray-700 flex items-center" data-section="documents">
+          <i class="fa fa-file-text w-6"></i><span data-i18n="documents">单据管理</span>
+        </a>
+        <a href="#clients" class="nav-link block px-4 py-3 hover:bg-gray-700 flex items-center" data-section="clients">
+          <i class="fa fa-users w-6"></i><span data-i18n="clients">客户管理</span>
+        </a>
+        <a href="#products" class="nav-link block px-4 py-3 hover:bg-gray-700 flex items-center" data-section="products">
+          <i class="fa fa-cubes w-6"></i><span data-i18n="products">产品库</span>
+        </a>
+        <a href="#inventory" class="nav-link block px-4 py-3 hover:bg-gray-700 flex items-center" data-section="inventory">
+          <i class="fa fa-archive w-6"></i><span data-i18n="inventory">库存管理</span>
+        </a>
+        <a href="#settings" class="nav-link block px-4 py-3 hover:bg-gray-700 flex items-center" data-section="settings">
+          <i class="fa fa-cog w-6"></i><span data-i18n="settings">设置</span>
+        </a>
+        <a href="#recurring" class="nav-link block px-4 py-3 hover:bg-gray-700 flex items-center" data-section="recurring">
+          <i class="fa fa-repeat w-6"></i><span data-i18n="recurring">定期账单</span>
+        </a>
+        <a href="#reports" class="nav-link block px-4 py-3 hover:bg-gray-700 flex items-center" data-section="reports">
+          <i class="fa fa-bar-chart w-6"></i><span data-i18n="reports">高级报表</span>
+        </a>
+      </nav>
+      <div class="absolute bottom-0 w-full p-4 border-t border-gray-700">
+        <div class="flex items-center justify-between">
+          <select id="language-switcher" class="bg-gray-700 text-white px-2 py-1 rounded text-sm">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+      </div>
+    </aside>
+
+    <div class="fixed bottom-4 right-4 z-50 md:hidden">
+      <button id="mobile-menu-btn" class="bg-blue-600 text-white rounded-full p-4 shadow-lg">
+        <i class="fa fa-bars"></i>
+      </button>
+    </div>
+
+    <main class="flex-1 overflow-y-auto">
+      <header class="bg-white shadow-sm">
+        <div class="flex justify-between items-center px-6 py-4">
+          <h2 id="page-title" class="text-xl font-semibold text-gray-800" data-i18n="dashboard">仪表盘</h2>
+          <div class="flex items-center space-x-3">
+            <button id="new-document-btn" type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+              <i class="fa fa-plus mr-2"></i><span data-i18n="newDocument">新建单据</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="p-6">
+        <section id="dashboard-section" class="section-content active">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-500 text-sm" data-i18n="totalReceived">已收总额</p>
+                  <p class="text-2xl font-bold text-gray-800" id="total-received">¥0.00</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-full"><i class="fa fa-money text-green-600 text-xl"></i></div>
+              </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-500 text-sm" data-i18n="pendingPayment">待收款项</p>
+                  <p class="text-2xl font-bold text-gray-800" id="pending-payment">¥0.00</p>
+                </div>
+                <div class="bg-yellow-100 p-3 rounded-full"><i class="fa fa-clock-o text-yellow-600 text-xl"></i></div>
+              </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-500 text-sm" data-i18n="overdue">逾期</p>
+                  <p class="text-2xl font-bold text-gray-800" id="overdue-amount">¥0.00</p>
+                </div>
+                <div class="bg-red-100 p-3 rounded-full"><i class="fa fa-exclamation-triangle text-red-600 text-xl"></i></div>
+              </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-500 text-sm" data-i18n="totalDocuments">单据总数</p>
+                  <p class="text-2xl font-bold text-gray-800" id="total-documents">0</p>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-full"><i class="fa fa-files-o text-blue-600 text-xl"></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold mb-4" data-i18n="recentDocuments">最近单据</h3>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="number">编号</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="type">类型</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="client">客户</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="date">日期</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="amount">金额</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="status">状态</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="actions">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-documents-table" class="bg-white divide-y divide-gray-200">
+                  <tr><td colspan="7" class="px-6 py-4 text-center text-gray-500" data-i18n="noDocuments">暂无单据</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="documents-section" class="section-content hidden">
+          <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold" data-i18n="allDocuments">所有单据</h3>
+              <div class="flex space-x-2">
+                <select id="document-filter" class="border rounded px-3 py-1">
+                  <option value="all" data-i18n="all">全部</option>
+                  <option value="invoice" data-i18n="invoice">发票</option>
+                  <option value="quote" data-i18n="quote">报价单</option>
+                  <option value="receipt" data-i18n="receipt">收据</option>
+                  <option value="purchase" data-i18n="purchase">采购单</option>
+                  <option value="proforma" data-i18n="proforma">形式发票</option>
+                  <option value="credit" data-i18n="credit">贷记通知单</option>
+                </select>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="number">编号</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="type">类型</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="client">客户</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="date">日期</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="amount">金额</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="status">状态</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="actions">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="documents-table" class="bg-white divide-y divide-gray-200">
+                  <tr><td colspan="7" class="px-6 py-4 text-center text-gray-500" data-i18n="noDocuments">暂无单据</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="clients-section" class="section-content hidden">
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold" data-i18n="clientManagement">客户管理</h3>
+              <button id="new-client-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                <i class="fa fa-plus mr-2"></i><span data-i18n="addClient">添加客户</span>
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="name">名称</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="email">邮箱</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="phone">电话</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="address">地址</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="taxId">税号</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="actions">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="clients-table" class="bg-white divide-y divide-gray-200">
+                  <tr><td colspan="6" class="px-6 py-4 text-center text-gray-500" data-i18n="noClients">暂无客户</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="products-section" class="section-content hidden">
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold" data-i18n="productManagement">产品/服务管理</h3>
+              <button id="new-product-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                <i class="fa fa-plus mr-2"></i><span data-i18n="addProduct">添加产品/服务</span>
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="name">名称</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="description">描述</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="price">价格</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="tax">税率 (%)</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="actions">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="products-table" class="bg-white divide-y divide-gray-200">
+                  <tr><td colspan="5" class="px-6 py-4 text-center text-gray-500" data-i18n="noProducts">暂无产品/服务</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="inventory-section" class="section-content hidden">
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold" data-i18n="inventoryManagement">库存管理</h3>
+              <button id="new-inventory-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">
+                <span data-i18n="addInventoryItem">+ 添加库存</span>
+              </button>
+            </div>
+            <div class="text-sm text-gray-500 mb-2">
+              <span data-i18n="totalInventoryItems">总条目</span>: <span id="inventory-count">0</span> |
+              <span data-i18n="lowStockCount">低库存预警</span>: <span id="inventory-low-count" class="text-red-600">0</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="name">名称</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="sku">SKU</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="price">价格</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="stock">库存</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="actions">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="inventory-table" class="bg-white divide-y divide-gray-200">
+                  <tr><td colspan="5" class="px-6 py-4 text-center text-gray-500" data-i18n="noInventory">暂无库存记录</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="settings-section" class="section-content hidden">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg shadow p-6">
+              <h3 class="text-lg font-semibold mb-4" data-i18n="companyInfo">公司信息</h3>
+              <form id="company-settings-form">
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="companyName">公司名称</label>
+                  <input type="text" id="company-name" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="companyEmail">公司邮箱</label>
+                  <input type="email" id="company-email" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="companyPhone">公司电话</label>
+                  <input type="text" id="company-phone" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="companyAddress">公司地址</label>
+                  <textarea id="company-address" class="shadow border rounded w-full py-2 px-3 text-gray-700" rows="3"></textarea>
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="companyTaxId">公司税号</label>
+                  <input type="text" id="company-tax-id" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="companyLogo">公司Logo</label>
+                  <input type="file" id="company-logo" accept="image/*" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                  <div id="logo-preview" class="mt-2"></div>
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="defaultCurrency">默认货币</label>
+                  <select id="default-currency" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                    <option value="¥">¥ CNY</option>
+                    <option value="$">$ USD</option>
+                    <option value="€">€ EUR</option>
+                    <option value="£">£ GBP</option>
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="defaultTaxRate">默认税率 (%)</label>
+                  <input type="number" id="default-tax-rate" value="13" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="paymentTerms">默认账期 (天)</label>
+                  <input type="number" id="payment-terms" value="30" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                </div>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg" data-i18n="saveSettings">保存设置</button>
+              </form>
+            </div>
+            <div class="space-y-6">
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4" data-i18n="backupRestore">备份与恢复</h3>
+                <div class="space-y-4">
+                  <p class="text-sm text-gray-600">导出所有数据为JSON备份文件</p>
+                  <button id="export-backup-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg" data-i18n="exportBackup">导出备份</button>
+                  <div class="pt-4 border-t">
+                    <p class="text-sm text-gray-600 mb-4">从备份文件恢复数据（会覆盖当前所有数据）</p>
+                    <input type="file" id="import-backup" accept=".json" class="mb-4">
+                    <button id="import-backup-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg" data-i18n="importBackup">导入备份</button>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4" data-i18n="about">关于</h3>
+                <div class="space-y-2">
+                  <p class="text-xl font-bold">InvoiceForge v1.0.0</p>
+                  <p class="text-sm text-gray-600" data-i18n="tagline">本地隐私优先的发票与单据管理工具</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="recurring-section" class="section-content hidden">
+          <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold">定期账单</h3>
+              <button id="new-recurring-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                <i class="fa fa-plus mr-2"></i><span>新建定期账单</span>
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full">
+                <thead>
+                  <tr class="border-b">
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">客户</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">金额</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">周期</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">下次生成</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="recurring-table-body">
+                  <tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">暂无定期账单</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="reports-section" class="section-content hidden">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg shadow p-6">
+              <h3 class="text-lg font-semibold mb-4">月度收入报表</h3>
+              <div id="report-monthly-revenue" class="text-gray-700">暂无数据</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+              <h3 class="text-lg font-semibold mb-4">客户应收排行</h3>
+              <div id="report-client-outstanding" class="text-gray-700">暂无数据</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+              <h3 class="text-lg font-semibold mb-4">单据类型分布</h3>
+              <div id="report-type-breakdown" class="text-gray-700">暂无数据</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+              <h3 class="text-lg font-semibold mb-4">逾期账款</h3>
+              <div id="report-overdue" class="text-gray-700">暂无数据</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- ===== Modals ===== -->
+    <!-- Document Modal (single, complete) -->
+    <div id="document-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-screen overflow-y-auto m-4">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 id="document-modal-title" class="text-xl font-bold" data-i18n="newDocument">新建单据</h3>
+            <button class="close-document-modal text-gray-500 hover:text-gray-700"><i class="fa fa-times"></i></button>
+          </div>
+          <form id="document-form" onsubmit="return false;">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="documentType">单据类型</label>
+                <select id="document-type" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                  <option value="invoice" data-i18n="invoice">发票</option>
+                  <option value="quote" data-i18n="quote">报价单</option>
+                  <option value="receipt" data-i18n="receipt">收据</option>
+                  <option value="purchase" data-i18n="purchase">采购单</option>
+                  <option value="proforma" data-i18n="proforma">形式发票</option>
+                  <option value="credit" data-i18n="credit">贷记通知单</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="issueDate">开票日期</label>
+                <input type="date" id="document-date" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+              </div>
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="dueDate">到期日</label>
+                <input type="date" id="document-due-date" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+              </div>
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="template">模板</label>
+                <select id="document-template" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                  <option value="classic" data-i18n="classic">经典</option>
+                  <option value="modern" data-i18n="modern">现代</option>
+                  <option value="minimal" data-i18n="minimal">极简</option>
+                  <option value="bold" data-i18n="bold">醒目</option>
+                </select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="selectClient">选择客户</label>
+                <select id="document-client" class="shadow border rounded w-full py-2 px-3 text-gray-700"></select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="notes">备注</label>
+                <textarea id="document-notes" rows="2" class="shadow border rounded w-full py-2 px-3 text-gray-700"></textarea>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <h4 class="text-lg font-semibold mb-2" data-i18n="items">项目明细</h4>
+              <table class="min-w-full text-sm mb-2">
+                <thead>
+                  <tr class="border-b text-gray-600">
+                    <th class="px-2 py-1 text-left" data-i18n="itemName">项目</th>
+                    <th class="px-2 py-1 text-left">SKU</th>
+                    <th class="px-2 py-1 text-left" data-i18n="price">单价</th>
+                    <th class="px-2 py-1 text-left" data-i18n="quantity">数量</th>
+                    <th class="px-2 py-1 text-left" data-i18n="tax">税率%</th>
+                    <th class="px-2 py-1 text-left" data-i18n="actions">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="document-items-body"></tbody>
+              </table>
+              <button type="button" id="add-item-btn" class="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm">
+                <i class="fa fa-plus"></i> <span data-i18n="addItem">添加项目</span>
+              </button>
+            </div>
+
+            <div class="flex justify-between items-center mt-4">
+              <div class="text-right text-sm">
+                <div>小计: <span id="document-subtotal">¥0.00</span></div>
+                <div>税额: <span id="document-tax">¥0.00</span></div>
+                <div class="font-bold text-base">合计: <span id="document-total">¥0.00</span></div>
+              </div>
+              <div class="space-x-2">
+                <button type="button" class="close-document-modal bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" data-i18n="cancel">取消</button>
+                <button type="button" id="save-document-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" data-i18n="save">保存</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client Modal -->
+    <div id="client-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md m-4">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 id="client-modal-title" class="text-xl font-bold" data-i18n="addNewClient">添加新客户</h3>
+            <button class="close-client-modal text-gray-500 hover:text-gray-700"><i class="fa fa-times"></i></button>
+          </div>
+          <form id="client-form" onsubmit="return false;">
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="clientName">客户名称</label>
+              <input type="text" id="client-name" class="shadow border rounded w-full py-2 px-3 text-gray-700" required>
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="clientEmail">客户邮箱</label>
+              <input type="email" id="client-email" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="clientPhone">客户电话</label>
+              <input type="text" id="client-phone" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="clientAddress">客户地址</label>
+              <textarea id="client-address" rows="2" class="shadow border rounded w-full py-2 px-3 text-gray-700"></textarea>
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="clientTaxId">客户税号</label>
+              <input type="text" id="client-tax-id" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <div class="flex justify-end space-x-2">
+              <button type="button" class="close-client-modal bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" data-i18n="cancel">取消</button>
+              <button type="button" id="save-client-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" data-i18n="save">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="product-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md m-4">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 id="product-modal-title" class="text-xl font-bold" data-i18n="addNewProduct">添加新产品/服务</h3>
+            <button class="close-product-modal text-gray-500 hover:text-gray-700"><i class="fa fa-times"></i></button>
+          </div>
+          <form id="product-form" onsubmit="return false;">
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="productName">产品/服务名称</label>
+              <input type="text" id="product-name" class="shadow border rounded w-full py-2 px-3 text-gray-700" required>
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="productDescription">产品/服务描述</label>
+              <textarea id="product-description" rows="3" class="shadow border rounded w-full py-2 px-3 text-gray-700"></textarea>
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="price">价格</label>
+              <input type="number" id="product-price" step="0.01" min="0" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="taxRate">税率</label>
+              <input type="number" id="product-tax" step="0.01" min="0" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <div class="flex justify-end space-x-2">
+              <button type="button" class="close-product-modal bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" data-i18n="cancel">取消</button>
+              <button type="button" id="save-product-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" data-i18n="save">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory Modal -->
+    <div id="inventory-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md m-4">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 id="inventory-modal-title" class="text-xl font-bold" data-i18n="inventoryManagement">库存管理</h3>
+            <button class="close-inventory-modal text-gray-500 hover:text-gray-700"><i class="fa fa-times"></i></button>
+          </div>
+          <form id="inventory-form" onsubmit="return false;">
+            <input type="hidden" id="inventory-id" />
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="productName">产品/服务名称</label>
+              <input type="text" id="inventory-name" class="shadow border rounded w-full py-2 px-3 text-gray-700" required>
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2">SKU</label>
+              <input type="text" id="inventory-sku" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="price">价格</label>
+              <input type="number" id="inventory-price" step="0.01" min="0" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="stock">库存</label>
+              <input type="number" id="inventory-stock" min="0" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2" data-i18n="lowStockThreshold">低库存阈值</label>
+              <input type="number" id="inventory-threshold" min="0" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <div class="flex justify-end space-x-2">
+              <button type="button" class="close-inventory-modal bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" data-i18n="cancel">取消</button>
+              <button type="button" id="save-inventory-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" data-i18n="save">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recurring Modal (driven by js/recurring.js) -->
+    <div id="recurring-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl m-4">
+        <div class="flex justify-between items-center mb-4 p-6 pb-0">
+            <h2 class="text-xl font-bold" data-i18n="recurringTitle">Recurring Invoices</h2>
+            <span class="modal-close close-recurring-modal cursor-pointer text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</span>
+          </div>
+          <div class="px-6 pb-6">
+            <p class="text-sm text-gray-600" data-i18n="recurringDesc">Automatically generate invoices on a schedule.</p>
+            <div class="mt-3 flex items-center justify-end">
+              <button type="button" id="rec-add-btn" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded" data-i18n="addRule">+ Add Rule</button>
+            </div>
+            <div id="rec-list" class="mt-4 space-y-2"></div>
+          </div>
+          <div class="flex justify-end mt-4 px-6 pb-6">
+            <button type="button" class="close-recurring-modal bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded-lg" data-i18n="close">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-screen overflow-y-auto m-4">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold" data-i18n="preview">预览</h3>
+            <div class="flex space-x-2">
+              <button id="print-document-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded text-sm">
+                <i class="fa fa-print"></i> <span data-i18n="print">打印</span>
+              </button>
+              <button id="export-pdf-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm">
+                <i class="fa fa-file-pdf-o"></i> <span data-i18n="exportPDF">导出PDF</span>
+              </button>
+              <button id="sign-document-btn" class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-3 rounded text-sm">
+                <i class="fa fa-pencil"></i> <span data-i18n="sign">电子签名</span>
+              </button>
+              <button class="close-preview-modal text-gray-500 hover:text-gray-700"><i class="fa fa-times"></i></button>
+            </div>
+          </div>
+          <div id="preview-content" class="border rounded p-4 bg-gray-50"></div>
+          <div class="flex justify-end mt-4">
+            <button type="button" class="close-preview-modal bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" data-i18n="close">关闭</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script src="js/i18n.js"></script>
+    <script src="js/encryption.js"></script>
+    <script src="js/qrcode.js"></script>
+    <script src="js/snapshots.js"></script>
+    <script src="js/recurring.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/thermal.js"></script>
+    <script src="js/signature.js"></script>
+    <script src="js/template-editor.js"></script>
+    <script src="js/reminders.js"></script>
+    <script src="js/templates.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

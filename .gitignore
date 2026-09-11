@@ -1,0 +1,24 @@
+# Python (smoke tests)
+__pycache__/
+*.py[cod]
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Office temp files
+~$*
+
+# Scratch / backups — never commit these
+*.bak
+*.bak[0-9]*
+*.orig
+*.rej
+_audit_backup/
+tools/_*
